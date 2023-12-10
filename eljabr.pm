@@ -35,7 +35,7 @@ package eljabr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.3;#b
+  our $VERSION = v0.00.4;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -43,18 +43,10 @@ package eljabr;
 
 sub new($class,$src,$hist=[]) {
 
-  # clean input
-  strip(\$src);
+  # split at equals
+  my @expr=$class->mkexpr($src);
 
-
-  # ^split at equals
-  my @expr=split m[\=],$src;
-
-  # make child icebox
-  my $chld="$class\::expr";
-  map {$ARG=$chld->new($ARG)} @expr;
-
-  # ^make ice
+  # make ice
   my $self=bless {
 
     expr  => \@expr,
@@ -76,10 +68,29 @@ sub new($class,$src,$hist=[]) {
 };
 
 # ---   *   ---   *   ---
+# ^make child icebox
+
+sub mkexpr($class,$src) {
+
+  # clean input
+  strip(\$src);
+
+  # split at equals
+  my @out  = split m[\=],$src;
+  my $chld = "$class\::expr";
+
+  # split terms
+  map {$ARG=$chld->new($ARG)} @out;
+
+
+  return @out;
+
+};
+
+# ---   *   ---   *   ---
 # ^expr wraps
 
 sub distribute($self) {
-
   map {
     $ARG->distribute()
 
@@ -137,12 +148,18 @@ sub modify($self,$i,$j,$x) {
 
 sub plug($self,%O) {
 
+  my $src   = $self->{hist}->[0];
+     $src   = @{$src}[1..@$src-1];
+
+  my $class = ref $self;
+  my @expr  = $class->mkexpr($src);
+
   my @plug=map {
     $ARG->plug(%O)
 
   } @{$self->{expr}};
 
-  # overwrite
+  # overwrite and calc
   $self->{plug}=\@plug;
 
 };
@@ -160,6 +177,23 @@ sub solve($self) {
   $self->{res}=\@out;
 
   return int(grep {$ARG==$out[0]} @out)==@out;
+
+};
+
+# ---   *   ---   *   ---
+# ^both at once
+
+sub check($self,%O) {
+
+  $self->plug(%O);
+
+  if($self->solve()) {
+    say "\n\e[32;1mOK\e[0m\n";
+
+  } else {
+    say "\n\e[31;22mNO\e[0m\n";
+
+  };
 
 };
 
@@ -208,7 +242,7 @@ sub histc($self,$com=1) {
 
   state $arg_re=qr{
     (?<! \%)
-    ((?:\d*[a-zA-Z]+|\d+))
+    ((?:[\d\.]*[a-zA-Z]+|[\d\.]+))
 
   }x;
 
@@ -222,17 +256,20 @@ sub histc($self,$com=1) {
     while($body=~ s[$arg_re][$PL_CUT]) {
 
       my $arg=$1;
-      my $tok=$NULLSTR;
+      my $col=$NULLSTR;
 
-      if($arg=~ m[\d+$]) {
-        $tok='[$]:%i';
+      if($arg=~ m[[\d\.]+$]) {
+        $col='$';
 
       } else {
-        $tok='[&]:%s';
+        $col='&';
 
       };
 
-      $body=~ s[$PL_CUT_RE][$tok];
+
+      $col  =  "[$col]:%s";
+      $body =~ s[$PL_CUT_RE][$col];
+
       push @args,$arg;
 
     };

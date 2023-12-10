@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.3;#b
+  our $VERSION = v0.00.4;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -87,7 +87,33 @@ sub new($class,$src) {
 
     } $lhand,$rhand;
 
-    push @term,"$lsign$lhand","$rsign$rhand";
+    my %tab=(
+      left  => [$lsign,$lhand],
+      right => [$rsign,$rhand],
+
+    );
+
+    # ^diff fractions
+    push @term,grep {
+      ! ($ARG=~ $ZEROTIMES_RE)
+
+    } map {
+
+      my ($sign,$hand)=@{$tab{$ARG}};
+
+#      if($hand=~ $FRAC_RE) {
+#        $hand="$sign($hand)";
+#
+#      } else {
+#        $hand="$sign$hand";
+#
+#      };
+
+"$sign$hand";
+
+#      $hand;
+
+    } qw(left right);
 
   };
 
@@ -280,14 +306,23 @@ sub over($self,$x) {
 
       my ($mul,$var,$exp)=@ar;
 
-      $mul /= $x;
+      if($t=~ $FRAC_RE) {
+        my $den=$+{bot};
+        $mul*=(1/$x) * (1/$den);
+
+      } else {
+        $mul /= $x;
+
+      };
 
       $mul  = $NULLSTR if $mul eq 1;
       $t    = "$mul$var$exp";
+      $t    = "+$t" if ! length $mul || $mul >= 0;
 
     # ^constants
     } else {
-      $t/=$x;
+      $t=eval "($t)/$x";
+      $t="+$t" if $t >= 0;
 
     };
 
@@ -415,6 +450,7 @@ sub update($self) {
   } @$self;
 
   @$self=@{$class->new($src)};
+
 
   return $src;
 

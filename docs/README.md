@@ -19,6 +19,14 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
+### v0.00.4b
+
+- Added `*::con::FRAC_RE` to detect terms with fractions.
+
+- Added initial *barebones* support for clearing fractions with `*::over(1/x)`.
+
+- `histc` no longer gets confused with fractional constants.
+
 ### v0.00.3b
 
 - `*::expr` methods no longer run automatic `update`.
