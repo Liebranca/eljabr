@@ -35,7 +35,7 @@ package eljabr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.1;#b
+  our $VERSION = v0.00.2;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -90,41 +90,45 @@ sub balance($self,$x) {
 
 };
 
+sub over($self,$x) {
+
+  map {
+    $ARG->over($x)
+
+  } @{$self->{expr}};
+
+  return;
+
+};
+
+sub combine($self) {
+
+  map {
+    $ARG->combine()
+
+  } @{$self->{expr}};
+
+  return;
+
+};
+
+sub modify($self,$i,$j,$x) {
+  $self->{expr}->[$i]->modify($j,$x);
+
+};
+
 # ---   *   ---   *   ---
 # put values
 
 sub plug($self,%O) {
 
-  state $exps=qr{\^};
+  my @plug=map {
+    $ARG->plug(%O)
 
-
-  # walk expressions
-  my @term = @{$self->{term}};
-  my $i    = 0;
-
-  for my $t(@term) {
-
-    # filter on have variable
-    while($t=~ m[$VAR_RE]smx) {
-
-      # get exponent
-      my $key=$+{var};
-      my $exp=$+{exp};
-
-      $exp //=  $NULLSTR;
-      $exp   =~ s[$exps][**];
-
-      # ^apply
-      my $value=$O{$key}.$exp;
-      $t=~ s[$VAR_RE][*$value];
-
-    };
-
-  };
-
+  } @{$self->{expr}};
 
   # overwrite
-  $self->{plug}=\@term;
+  $self->{plug}=\@plug;
 
 };
 
@@ -133,16 +137,14 @@ sub plug($self,%O) {
 
 sub solve($self) {
 
-  my @out  = (0,0);
-  my $plug = $self->{plug};
+  my @out  = map {
+    $ARG->solve()
 
-  map {$out[0]+=eval $ARG} @$plug;
+  } @{$self->{plug}};
 
-
-  $out[1]=eval $self->{equ};
   $self->{res}=\@out;
 
-  return $out[0];
+  return int(grep {$ARG==$out[0]} @out)==@out;
 
 };
 

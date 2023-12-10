@@ -19,4 +19,14 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
-- v0.00.1b: Turned a literal scratch buffer into a repo.
+### v0.00.2b
+
+- Added `over` method for term/expr division.
+
+- Simplified term-value extraction with `*::expr` guts `_tex` and `_texv` methods.
+
+- `*::con::VAR` re now accounts for the variable multiplier.
+
+### v0.00.1b
+
+- Turned a literal scratch buffer into a repo.

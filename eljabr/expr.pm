@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.1;#b
+  our $VERSION = v0.00.2;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -60,7 +60,7 @@ sub new($class,$src) {
 
   state $parbeg = qr{\(};
   state $parend = qr{\)};
-  state $rm     = qr{^\+0$};
+  state $rm     = qr{^\+0$VAR_RE?$};
 
 
   # clean input
@@ -138,6 +138,74 @@ sub new($class,$src) {
 };
 
 # ---   *   ---   *   ---
+# extract values from term
+
+sub _tex($self,$sref,%O) {
+
+  # defaults
+  $O{subst} //= undef;
+
+  # run cmp
+  return ()
+
+  if  defined $O{subst}
+  &&! ($$sref=~ s[$ELEM_RE][$O{subst}])
+  ;
+
+  return ()
+
+  if! defined $O{subst}
+  &&! ($$sref=~ $ELEM_RE)
+  ;
+
+  # ^get matches and give
+  my $pre    = $+{pre};
+     $pre    = '+' if ! $pre;
+
+  my $stop   = $+{stop};
+  my $post   = $+{post};
+     $post //= $NULLSTR;
+
+  return ($pre,$stop,$post);
+
+};
+
+# ---   *   ---   *   ---
+# ^same for varterms
+
+sub _texv($self,$sref,%O) {
+
+  # defaults
+  $O{subst} //= undef;
+
+  # run cmp
+  return ()
+
+  if  defined $O{subst}
+  &&! ($$sref=~ s[$VAR_RE][$O{subst}])
+  ;
+
+  return ()
+
+  if! defined $O{subst}
+  &&! ($$sref=~ $VAR_RE)
+  ;
+
+
+  # ^get matches and give
+  my $var   = $+{var};
+
+  my $mul   = $+{mul};
+     $mul //= 1;
+
+  my $exp   = $+{exp};
+     $exp //= $NULLSTR;
+
+  return ($mul,$var,$exp);
+
+};
+
+# ---   *   ---   *   ---
 # apply distributive
 
 sub distribute($self) {
@@ -163,16 +231,14 @@ sub distribute($self) {
 
       # extract N from <pre>(N+NX)
       # then apply multiplier
-      while($par=~ s[$ELEM_RE][]) {
+      while(my @ar=$self->_tex(
+        \$par,
+        subst=>$NULLSTR
 
-        my $pre    = $+{pre};
-           $pre    = '+' if ! $pre;
+      )) {
 
-        my $stop   = $+{stop};
-           $stop   = $num*$stop;
-
-        my $post   = $+{post};
-           $post //= $NULLSTR;
+        my ($pre,$stop,$post)=@ar;
+        $stop=$num*$stop;
 
         # remove parens
         $pre  =~ s[$rm][]sxmg;
@@ -207,6 +273,37 @@ sub balance($self,$x) {
 };
 
 # ---   *   ---   *   ---
+# divide expr by
+
+sub over($self,$x) {
+
+  # extract values
+  for my $t(@$self) {
+
+    # terms with V^E
+    if(my @ar=$self->_texv(\$t)) {
+
+      my ($mul,$var,$exp)=@ar;
+
+      $mul /= $x;
+
+      $mul  = $NULLSTR if $mul eq 1;
+      $t    = "$mul$var$exp";
+
+    # ^constants
+    } else {
+      $t/=$x;
+
+    };
+
+  };
+
+  # recalc
+  $self->update();
+
+};
+
+# ---   *   ---   *   ---
 # ^modify Nth term
 
 sub modify($self,$i,$x) {
@@ -232,24 +329,15 @@ sub combine($self) {
   for my $t(@$self) {
 
     # extract values
-    if($t=~ $ELEM_RE) {
+    if(my @ar=$self->_tex(\$t)) {
 
-      my $pre    = $+{pre};
-         $pre    = '+' if ! $pre;
-
-      my $stop   = $+{stop};
-      my $post   = $+{post};
-         $post //= $NULLSTR;
-
+      my ($pre,$stop,$post)=@ar;
 
       # terms with V^E
-      if($t=~ $VAR_RE) {
+      if(my @ar=$self->_texv(\$t)) {
 
-        my $var   = $+{var};
-        my $exp   = $+{exp};
-           $exp //= $NULLSTR;
-
-        my $id    = $var.$exp;
+        my ($mul,$var,$exp)=@ar;
+        my $id=$var.$exp;
 
         $tab->{V}->{$id} //= 0;
 
@@ -280,6 +368,49 @@ sub combine($self) {
   } keys %{$tab->{V}}),$tab->{C});
 
   $self->update();
+
+};
+
+# ---   *   ---   *   ---
+# make copy with values put
+
+sub plug($self,%O) {
+
+  state $exps=qr{\^};
+
+
+  # walk copy of expression
+  my @term=@$self;
+  for my $t(@term) {
+
+    # filter on have variable
+    while(my @ar=$self->_texv(\$t)) {
+
+      # get exponent
+      my ($mul,$var,$exp)=@ar;
+      $exp=~ s[$exps][**];
+
+      # ^apply
+      my $value=$O{$var}.$exp;
+      $t=~ s[$VAR_RE][$mul*$value];
+
+    };
+
+  };
+
+  return bless [@term],ref $self;
+
+};
+
+# ---   *   ---   *   ---
+# ^solve with put values
+
+sub solve($self) {
+
+  my $out=0;
+  map {$out+=eval $ARG} @$self;
+
+  return $out;
 
 };
 

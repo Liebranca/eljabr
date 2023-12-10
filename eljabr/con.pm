@@ -46,7 +46,7 @@ package eljabr::con;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.1;#b
+  our $VERSION = v0.00.2;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -57,8 +57,10 @@ package eljabr::con;
 
   );
 
+  Readonly our $SIGN_RE  => qr{[\-\+]};
 
   Readonly our $VAR_RE=>qr{
+    (?<mul> \d+)?
     (?<var> [A-Za-z]\d?)
     (?<exp> \^\d)?
 
@@ -66,8 +68,7 @@ package eljabr::con;
 
   Readonly our $ONETIMES_RE=>qr{1\s*$VAR_RE};
 
-  Readonly our $SIGN_RE  => qr{[\-\+]};
-  Readonly our $STOP_RE  => qr{(?:[\-\+]?\d+)};
+  Readonly our $STOP_RE  => qr{(?:$SIGN_RE?\d+)};
   Readonly our $NSTOP_RE => qr{(?:[^\-\+\d]*)};
 
 
