@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.2;#b
+  our $VERSION = v0.00.3;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -60,7 +60,6 @@ sub new($class,$src) {
 
   state $parbeg = qr{\(};
   state $parend = qr{\)};
-  state $rm     = qr{^\+0$VAR_RE?$};
 
 
   # clean input
@@ -130,7 +129,7 @@ sub new($class,$src) {
 
 
   # clean "+0"
-  @term=grep {! ($ARG=~ $rm)} @tmp;
+  @term=grep {! ($ARG=~ $ZEROTIMES_RE)} @tmp;
 
   # make ice
   return bless [@term],$class;
@@ -257,10 +256,6 @@ sub distribute($self) {
 
   };
 
-
-  # recalc
-  $self->update();
-
 };
 
 # ---   *   ---   *   ---
@@ -298,9 +293,6 @@ sub over($self,$x) {
 
   };
 
-  # recalc
-  $self->update();
-
 };
 
 # ---   *   ---   *   ---
@@ -308,7 +300,6 @@ sub over($self,$x) {
 
 sub modify($self,$i,$x) {
   $self->[$i]=$x;
-  $self->update();
 
 };
 
@@ -367,8 +358,6 @@ sub combine($self) {
 
   } keys %{$tab->{V}}),$tab->{C});
 
-  $self->update();
-
 };
 
 # ---   *   ---   *   ---
@@ -419,10 +408,15 @@ sub solve($self) {
 
 sub update($self) {
 
-  my $class = ref $self;
-  my $src   = join $NULLSTR,@$self;
+  my $class =  ref $self;
+  my $src   =  join $NULLSTR,grep {
+    ! ($ARG=~ $ZEROTIMES_RE)
+
+  } @$self;
 
   @$self=@{$class->new($src)};
+
+  return $src;
 
 };
 

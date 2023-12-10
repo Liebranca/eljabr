@@ -19,6 +19,18 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
+### v0.00.3b
+
+- `*::expr` methods no longer run automatic `update`.
+
+- Running of `update` moved to `*::expr` wraps, ran by container.
+
+- Wrapped `update` adds a comment detailing the edit and pushes to a history array.
+
+- `hist` method added for printing out container `update` history.
+
+- `histc` for doing the same, but with colors ;>
+
 ### v0.00.2b
 
 - Added `over` method for term/expr division.
