@@ -323,13 +323,16 @@ sub distribute($self) {
     while($t=~ $distr) {
 
       my $num=$+{num};
+      my $den=1;
+
       my $par=$+{par};
       my $sim=$NULLSTR;
 
       # fractions are for losers
       # decimal multiplier goes BRRRRRRRRR
       if($num=~ $FRAC_RE) {
-        $num=$+{top}/$+{bot};
+        $num=$+{top};
+        $den=$+{bot};
 
       };
 
@@ -352,11 +355,11 @@ sub distribute($self) {
           $stop=
             ($top*$num).$topv
           . '/'
-          . ($bot*$num).$botv
+          . ($bot*$den).$botv
           ;
 
         } else {
-          $stop=$num*$stop;
+          $stop=($num/$den)*$stop;
 
         };
 
@@ -564,7 +567,6 @@ sub solve($self) {
 
   my $out=0;
   map {$out+=eval $ARG} @$self;
-
 
   return $out;
 
