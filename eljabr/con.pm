@@ -25,13 +25,16 @@ package eljabr::con;
   use lib $ENV{'ARPATH'}.'/lib/sys/';
   use Style;
 
-  use Arstd::Re;
+ use Arstd::Re;
 
 # ---   *   ---   *   ---
 # adds to your namespace
 
   use Exporter 'import';
   our @EXPORT=qw(
+
+    $EPS
+    $NUM_RE
 
     $PARENS_RE
     $VAR_RE
@@ -48,11 +51,14 @@ package eljabr::con;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.4;#b
+  our $VERSION = v0.00.5;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
 # ROM
+
+  Readonly our $EPS=>1e-8;
+  Readonly our $NUM_RE=>qr{[\d\.]+};
 
   Readonly our $PARENS_RE=>re_delim(
     '(',')'
@@ -62,14 +68,17 @@ package eljabr::con;
   Readonly our $SIGN_RE  => qr{[\-\+]};
 
   Readonly our $VAR_RE=>qr{
-    (?<mul> [\d\.]+)?
+    (?<mul> $SIGN_RE?[\d\.]+)?
     (?<var> [A-Za-z]\d?)
     (?<exp> \^\d)?
 
   }x;
 
   Readonly our $ZEROTIMES_RE=>qr{
-    ^$SIGN_RE?0$VAR_RE?$
+    ^$SIGN_RE?0
+    (?<! \.)
+
+    $VAR_RE?$
 
   }x;
 
@@ -78,19 +87,18 @@ package eljabr::con;
   Readonly our $STOP_RE  => qr{(?:$SIGN_RE?[\d\.]+)};
   Readonly our $NSTOP_RE => qr{(?:[^\-\+\d\.]*)};
 
-
-  Readonly our $ELEM_RE=>qr{
-    (?<pre>  $NSTOP_RE)
-    (?<stop> $STOP_RE)
-    (?<post> $VAR_RE)?
-
-  }x;
-
   Readonly our $FRAC_RE=>qr{
     (?<top> $VAR_RE|$STOP_RE)
     \s* / \s*
 
     (?<bot> $VAR_RE|$STOP_RE)
+
+  }x;
+
+  Readonly our $ELEM_RE=>qr{
+    (?<pre>  $NSTOP_RE)
+    (?<stop> $FRAC_RE|$STOP_RE)
+    (?<post> $VAR_RE)?
 
   }x;
 

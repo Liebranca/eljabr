@@ -35,7 +35,7 @@ package eljabr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.4;#b
+  our $VERSION = v0.00.5;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -149,7 +149,8 @@ sub modify($self,$i,$j,$x) {
 sub plug($self,%O) {
 
   my $src   = $self->{hist}->[0];
-     $src   = @{$src}[1..@$src-1];
+     $src   = join '=',@{$src}[1..@$src-1];
+
 
   my $class = ref $self;
   my @expr  = $class->mkexpr($src);
@@ -157,7 +158,7 @@ sub plug($self,%O) {
   my @plug=map {
     $ARG->plug(%O)
 
-  } @{$self->{expr}};
+  } @expr;
 
   # overwrite and calc
   $self->{plug}=\@plug;
@@ -170,13 +171,19 @@ sub plug($self,%O) {
 sub solve($self) {
 
   my @out  = map {
-    $ARG->solve()
+
+    my $src=join $NULLSTR,@$ARG;
+    my $out=$ARG->solve();
+
+    $out;
 
   } @{$self->{plug}};
 
-  $self->{res}=\@out;
+  return int(grep {
+     $ARG >= $out[0]-$EPS
+  && $ARG <= $out[0]+$EPS
 
-  return int(grep {$ARG==$out[0]} @out)==@out;
+  } @out)==@out;
 
 };
 
@@ -259,9 +266,29 @@ sub histc($self,$com=1) {
       my $col=$NULLSTR;
 
       if($arg=~ m[[\d\.]+$]) {
+
+        $arg=($arg=~ m[\.])
+          ? sprintf "%.4f",$arg
+          : $arg
+          ;
+
         $col='$';
 
       } else {
+
+        if($arg=~ s[($NUM_RE)][$PL_CUT]) {
+
+          my $n=$1;
+
+          $n=($n=~ m[\.])
+            ? sprintf "%.4f",$n
+            : $n
+            ;
+
+          $arg=~ s[$PL_CUT_RE][$n];
+
+        };
+
         $col='&';
 
       };

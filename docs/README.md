@@ -19,31 +19,43 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
+### v0.00.5b
+
+- Fractional terms are now clamped to four decimals.
+
+- Added `*::con::EPS` to do "loose" comparison between fractional terms rather than unviable strict equality.
+
+- `*::expr::(combine|distribute)` initial support for multiplying and adding fractions.
+
+- `*::plug` now correctly uses the first element in history array for solving.
+
+- Added `*::check` for plugging and solving expressions.
+
 ### v0.00.4b
 
 - Added `*::con::FRAC_RE` to detect terms with fractions.
 
 - Added initial *barebones* support for clearing fractions with `*::over(1/x)`.
 
-- `histc` no longer gets confused with fractional constants.
+- `*::histc` no longer gets confused with fractional constants.
 
 ### v0.00.3b
 
-- `*::expr` methods no longer run automatic `update`.
+- `*::expr` methods no longer run automatic `*::expr::update`.
 
-- Running of `update` moved to `*::expr` wraps, ran by container.
+- Running of `*::update` moved to `*::expr` wraps, ran by container.
 
-- Wrapped `update` adds a comment detailing the edit and pushes to a history array.
+- Wrapped `*::expr::update` adds a comment detailing the edit and pushes to a history array.
 
-- `hist` method added for printing out container `update` history.
+- `*::hist` method added for printing out container `*::update` history.
 
-- `histc` for doing the same, but with colors ;>
+- `*::histc` for doing the same, but with colors ;>
 
 ### v0.00.2b
 
-- Added `over` method for term/expr division.
+- Added `*::expr::over` method for term division as well as matching container wrapper.
 
-- Simplified term-value extraction with `*::expr` guts `_tex` and `_texv` methods.
+- Simplified term-value extraction with `*::expr` guts `*::expr::_tex` and `*::expr::_texv` methods.
 
 - `*::con::VAR` re now accounts for the variable multiplier.
 

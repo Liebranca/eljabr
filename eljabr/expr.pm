@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.4;#b
+  our $VERSION = v0.00.5;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -157,6 +157,32 @@ sub new($class,$src) {
   # clean "+0"
   @term=grep {! ($ARG=~ $ZEROTIMES_RE)} @tmp;
 
+  # clean long decimals
+  map {
+
+    my @args=();
+    while($ARG=~ s[($NUM_RE)][$PL_CUT]) {
+
+      my $x=$1;
+
+      $x=($x=~ m[\.])
+        ? sprintf "%.4f",$x
+        : $x
+        ;
+
+      push @args,$x;
+
+    };
+
+    while(@args) {
+      my $x=shift @args;
+      $ARG=~ s[$PL_CUT_RE][$x];
+
+    };
+
+  } @term;
+
+
   # make ice
   return bless [@term],$class;
 
@@ -231,12 +257,58 @@ sub _texv($self,$sref,%O) {
 };
 
 # ---   *   ---   *   ---
+# ^... fractions
+
+sub _texf($self,$sref,%O) {
+
+  # defaults
+  $O{subst} //= undef;
+
+  # run cmp
+  return ()
+
+  if  defined $O{subst}
+  &&! ($$sref=~ s[$FRAC_RE][$O{subst}])
+  ;
+
+  return ()
+
+  if! defined $O{subst}
+  &&! ($$sref=~ $FRAC_RE)
+  ;
+
+
+  # ^get matches
+  my $top   = $+{top};
+  my $bot   = $+{bot};
+
+  my $topv  = $NULLSTR;
+  my $botv  = $NULLSTR;
+
+  # ^recurse
+  map {
+
+    my ($dst,$dstv)=@$ARG;
+
+    if(my @ar=$self->_texv($dst)) {
+      $$dst  = shift @ar;
+      $$dstv = join $NULLSTR,@ar;
+
+    };
+
+  } ([\$top,\$topv],[\$bot,\$botv]);
+
+  return ($top,$topv,$bot,$botv);
+
+};
+
+# ---   *   ---   *   ---
 # apply distributive
 
 sub distribute($self) {
 
   state $distr=qr{
-    (?<num> $STOP_RE)
+    (?<num> $FRAC_RE|$STOP_RE)
     (?<par> $PARENS_RE)
 
   }x;
@@ -254,6 +326,14 @@ sub distribute($self) {
       my $par=$+{par};
       my $sim=$NULLSTR;
 
+      # fractions are for losers
+      # decimal multiplier goes BRRRRRRRRR
+      if($num=~ $FRAC_RE) {
+        $num=$+{top}/$+{bot};
+
+      };
+
+
       # extract N from <pre>(N+NX)
       # then apply multiplier
       while(my @ar=$self->_tex(
@@ -263,7 +343,22 @@ sub distribute($self) {
       )) {
 
         my ($pre,$stop,$post)=@ar;
-        $stop=$num*$stop;
+
+        # fractions...
+        if(@ar=$self->_texf(\$stop)) {
+
+          my ($top,$topv,$bot,$botv)=@ar;
+
+          $stop=
+            ($top*$num).$topv
+          . '/'
+          . ($bot*$num).$botv
+          ;
+
+        } else {
+          $stop=$num*$stop;
+
+        };
 
         # remove parens
         $pre  =~ s[$rm][]sxmg;
@@ -365,19 +460,41 @@ sub combine($self) {
         my ($mul,$var,$exp)=@ar;
         my $id=$var.$exp;
 
+
+        # fracs r4 loserz
+        if(@ar=$self->_texf(\$t)) {
+
+          my ($top,$topv,$bot,$botv)=@ar;
+          $stop="$top/$bot";
+
+        };
+
         $tab->{V}->{$id} //= 0;
 
-        my $op=  "$tab->{V}->{$id}$pre$stop";
-           $op=~ s[\++][+]sxmg;
-           $op=~ s[\-+][-]sxmg;
+        my $op =  "$tab->{V}->{$id}$pre$stop";
+           $op =~ s[\++][+]sxmg;
+           $op =~ s[\-+][-]sxmg;
 
         $tab->{V}->{$id}=eval $op;
 
       # ^constants
       } else {
-        $tab->{C}+=$stop;
+        $tab->{C}+=eval $stop;
 
       };
+
+
+    } else {
+
+      $t=~ s[($SIGN_RE)][];
+
+      my $sign=(defined $1)
+        ? $1
+        : '+'
+        ;
+
+      $tab->{V}->{$t}//=0;
+      $tab->{V}->{$t}+="${sign}1";
 
     };
 
@@ -389,7 +506,16 @@ sub combine($self) {
 
   # sum and recalc
   @$self=((map {
-    $tab->{V}->{$ARG}.$ARG;
+
+    my $sign=($tab->{V}->{$ARG} < 0)
+      ? '-'
+      : '+'
+      ;
+
+    (abs($tab->{V}->{$ARG}) eq 1)
+      ? $ARG
+      : $tab->{V}->{$ARG}.$ARG
+      ;
 
   } keys %{$tab->{V}}),$tab->{C});
 
@@ -403,9 +529,14 @@ sub plug($self,%O) {
   state $exps=qr{\^};
 
 
-  # walk copy of expression
-  my @term=@$self;
-  for my $t(@term) {
+  # make copy
+  my @term = @$self;
+  my $cpy  = bless [@term],ref $self;
+
+  $cpy->distribute();
+
+  # ^walk
+  for my $t(@$cpy) {
 
     # filter on have variable
     while(my @ar=$self->_texv(\$t)) {
@@ -422,7 +553,7 @@ sub plug($self,%O) {
 
   };
 
-  return bless [@term],ref $self;
+  return $cpy;
 
 };
 
@@ -433,6 +564,7 @@ sub solve($self) {
 
   my $out=0;
   map {$out+=eval $ARG} @$self;
+
 
   return $out;
 
