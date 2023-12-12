@@ -35,8 +35,26 @@ package eljabr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.5;#b
+  our $VERSION = v0.00.6;#b
   our $AUTHOR  = 'IBN-3DILA';
+
+# ---   *   ---   *   ---
+# crux
+
+sub import($class,%O) {
+
+  # defaults
+  $O{eps}   //= undef;
+  $O{fpres} //= 4;
+
+  # ^apply settings
+  $FPRES = $O{fpres};
+  $EPS   = (defined $O{eps})
+    ? $O{eps}
+    : eval "1e-$FPRES"
+    ;
+
+};
 
 # ---   *   ---   *   ---
 # cstruc
@@ -268,7 +286,7 @@ sub histc($self,$com=1) {
       if($arg=~ m[[\d\.]+$]) {
 
         $arg=($arg=~ m[\.])
-          ? sprintf "%.4f",$arg
+          ? sprintf "%.${FPRES}f",$arg
           : $arg
           ;
 
@@ -281,7 +299,7 @@ sub histc($self,$com=1) {
           my $n=$1;
 
           $n=($n=~ m[\.])
-            ? sprintf "%.4f",$n
+            ? sprintf "%.${FPRES}f",$n
             : $n
             ;
 

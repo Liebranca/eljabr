@@ -19,6 +19,18 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
+### v0.00.6b
+
+- Fixed mistake in `*::con` regexes `NUM_RE`, `VAR_RE` and `ZEROTIMES_RE` that caused `|X| lt 1` variable terms to be filtered out as a zero.
+
+- Added `*::con::FPRES` global for setting decimal precision; fractional terms clamp to this settable number.
+
+- Value of `*::con::EPS` is no longer read-only; it defaults to `1e-*::con::FPRES` and can be manually set.
+
+- `*::import` method accepts `fpres` option for setting precision; `eps` for setting epsilon.
+
+- `*::expr::distribute` no longer skips `1X` when the multiplier is implicit.
+
 ### v0.00.5b
 
 - Fractional terms are now clamped to four decimals.

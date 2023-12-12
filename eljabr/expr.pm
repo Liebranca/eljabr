@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.5;#b
+  our $VERSION = v0.00.6;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -95,7 +95,7 @@ sub new($class,$src) {
 
     # ^diff fractions
     push @term,grep {
-      ! ($ARG=~ $ZEROTIMES_RE)
+      ! ($ARG=~ $ZEROTIMES_RE);
 
     } map {
 
@@ -166,7 +166,7 @@ sub new($class,$src) {
       my $x=$1;
 
       $x=($x=~ m[\.])
-        ? sprintf "%.4f",$x
+        ? sprintf "%.${FPRES}f",$x
         : $x
         ;
 
@@ -216,6 +216,18 @@ sub _tex($self,$sref,%O) {
   my $stop   = $+{stop};
   my $post   = $+{post};
      $post //= $NULLSTR;
+
+
+  # edge case: implicit 1V
+  if(my @ar=$self->_texv(\$stop)) {
+
+    my ($mul,$var,$exp)=@ar;
+
+    $post="$var$exp";
+    $stop=$mul;
+
+  };
+
 
   return ($pre,$stop,$post);
 
