@@ -52,7 +52,7 @@ package eljabr::con;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.6;#b
+  our $VERSION = v0.00.7;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -68,7 +68,7 @@ package eljabr::con;
   Readonly our $SIGN_RE  => qr{[\-\+]};
 
   Readonly our $VAR_RE=>qr{
-    (?<mul> $SIGN_RE?$NUM_RE)?
+    (?<mul> $SIGN_RE?$NUM_RE?)
     (?<var> [A-Za-z]\d?)
     (?<exp> \^\d)?
 
@@ -102,8 +102,7 @@ package eljabr::con;
 
   Readonly our $ELEM_RE=>qr{
     (?<pre>  $NSTOP_RE)
-    (?<stop> $FRAC_RE|$STOP_RE|$VAR_RE)
-    (?<post> $VAR_RE)?
+    (?<stop> $FRAC_RE|$VAR_RE|$STOP_RE)
 
   }x;
 

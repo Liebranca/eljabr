@@ -33,7 +33,7 @@ package eljabr::expr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.6;#b
+  our $VERSION = v0.00.7;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -214,9 +214,7 @@ sub _tex($self,$sref,%O) {
      $pre    = '+' if ! $pre;
 
   my $stop   = $+{stop};
-  my $post   = $+{post};
-     $post //= $NULLSTR;
-
+  my $post   = $NULLSTR;
 
   # edge case: implicit 1V
   if(my @ar=$self->_texv(\$stop)) {
@@ -259,7 +257,8 @@ sub _texv($self,$sref,%O) {
   my $var   = $+{var};
 
   my $mul   = $+{mul};
-     $mul //= 1;
+     $mul   = 1 if ! $mul;
+     $mul   = -1 if $mul eq '-';
 
   my $exp   = $+{exp};
      $exp //= $NULLSTR;
@@ -348,7 +347,6 @@ sub distribute($self) {
 
       };
 
-
       # extract N from <pre>(N+NX)
       # then apply multiplier
       while(my @ar=$self->_tex(
@@ -379,6 +377,8 @@ sub distribute($self) {
         $pre  =~ s[$rm][]sxmg;
         $stop =~ s[$rm][]sxmg;
         $post =~ s[$rm][]sxmg;
+
+        $pre  = '+' if ! $pre;
 
         # ^compose final
         $sim.="$pre$stop$post";

@@ -35,7 +35,7 @@ package eljabr;
 # ---   *   ---   *   ---
 # info
 
-  our $VERSION = v0.00.6;#b
+  our $VERSION = v0.00.7;#b
   our $AUTHOR  = 'IBN-3DILA';
 
 # ---   *   ---   *   ---
@@ -189,11 +189,7 @@ sub plug($self,%O) {
 sub solve($self) {
 
   my @out  = map {
-
-    my $src=join $NULLSTR,@$ARG;
-    my $out=$ARG->solve();
-
-    $out;
+    $ARG->solve();
 
   } @{$self->{plug}};
 
@@ -267,7 +263,7 @@ sub histc($self,$com=1) {
 
   state $arg_re=qr{
     (?<! \%)
-    ((?:[\d\.]*[a-zA-Z]+|[\d\.]+))
+    ((?:[\d][\d\.]*[a-zA-Z]+|[\d][\d\.]*))
 
   }x;
 

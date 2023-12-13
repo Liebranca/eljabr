@@ -19,6 +19,12 @@ That will build the project into `$ARPATH/lib/eljabr/`.
 
 # CHANGELOG
 
+### v0.00.7b
+
+- Fixed mistake in `*::con::ELEM_RE` that would consider capturing variable multipliers but not variables when applying distributive.
+
+- Fixed mistake in `*::expr::_tex` that would sometimes turn negative variables positive when substracting from a constant.
+
 ### v0.00.6b
 
 - Fixed mistake in `*::con` regexes `NUM_RE`, `VAR_RE` and `ZEROTIMES_RE` that caused `|X| lt 1` variable terms to be filtered out as a zero.
